@@ -2,16 +2,20 @@ import { useState } from 'react';
 import useTodoStore from '../stores/todoStore';
 
 function TaskForm() {
-  const addTodo = useTodoStore(state => state.addTodo);
+  const { addTodo } = useTodoStore();
   const [formData, setFormData] = useState({
     name: '',
     priority: 'medium',
     due_date: new Date().toISOString().split('T')[0]
   });
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    await addTodo(formData);
+    addTodo({
+      name: formData.name,
+      priority: formData.priority,
+      due_date: formData.due_date
+    });
     setFormData({
       name: '',
       priority: 'medium',
@@ -28,7 +32,11 @@ function TaskForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="task-form">
+    <form 
+      onSubmit={handleSubmit} 
+      className="task-form" 
+      aria-label="Add todo form"
+    >
       <input
         type="text"
         name="name"
@@ -51,6 +59,7 @@ function TaskForm() {
         name="due_date"
         value={formData.due_date}
         onChange={handleChange}
+        role="date"
       />
       <button type="submit">Add Task</button>
     </form>

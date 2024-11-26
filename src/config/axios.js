@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Add default config
-axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+axios.defaults.baseURL = import.meta.env.VITE_API_URL || '/';
 axios.defaults.headers.common['Content-Type'] = 'application/json';
 
 // Add interceptors for error handling if needed
