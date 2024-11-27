@@ -1,5 +1,5 @@
 import express from 'express';
-import { dbPromise } from '../modules/db.js';
+import { Todo } from '../modules/db.js';
 import validateTodo from '../middleware/todoValidation.js';
 
 const router = express.Router();
@@ -8,15 +8,8 @@ const router = express.Router();
 router.post('/', validateTodo, async (req, res) => {
   try {
     const { name, priority, due_date } = req.body;
-    const db = await dbPromise;
-    console.log('Got DB connection:', !!db);
-    
-    const result = await db.run(
-      `INSERT INTO todos (name, priority, due_date) 
-       VALUES (?, ?, ?)`,
-      [name, priority, due_date]
-    );
-    res.status(201).json({ id: result.lastID });
+    const todo = await Todo.create({ name, priority, due_date });
+    res.status(201).json(todo);
   } catch (error) {
     console.error('POST /todos error:', error.stack);
     res.status(500).json({ error: error.message });
@@ -26,8 +19,7 @@ router.post('/', validateTodo, async (req, res) => {
 // Read all todos
 router.get('/', async (req, res) => {
   try {
-    const db = await dbPromise;
-    const todos = await db.all('SELECT * FROM todos');
+    const todos = await Todo.findAll();
     res.json(todos);
   } catch (error) {
     console.error('GET /todos error:', error);
@@ -38,8 +30,7 @@ router.get('/', async (req, res) => {
 // Read single todo
 router.get('/:id', async (req, res) => {
   try {
-    const db = await dbPromise;
-    const todo = await db.get('SELECT * FROM todos WHERE id = ?', req.params.id);
+    const todo = await Todo.findByPk(req.params.id);
     if (todo) {
       res.json(todo);
     } else {
@@ -56,31 +47,26 @@ router.put('/:id', async (req, res) => {
   try {
     const { name, priority, due_date, completed_at } = req.body;
     
-    // Validate priority if provided
     if (priority && !['low', 'medium', 'high'].includes(priority)) {
       return res.status(400).json({ 
         error: 'priority must be low, medium, or high' 
       });
     }
 
-    const db = await dbPromise;
-    const result = await db.run(
-      `UPDATE todos 
-       SET name = COALESCE(?, name), 
-           priority = COALESCE(?, priority), 
-           due_date = COALESCE(?, due_date), 
-           completed_at = COALESCE(?, completed_at), 
-           updated_at = CURRENT_TIMESTAMP 
-       WHERE id = ?`,
-      [name, priority, due_date, completed_at, req.params.id]
-    );
-
-    if (result.changes > 0) {
-      const updated = await db.get('SELECT * FROM todos WHERE id = ?', req.params.id);
-      res.json(updated);
-    } else {
-      res.status(404).json({ error: 'Todo not found' });
+    const todo = await Todo.findByPk(req.params.id);
+    if (!todo) {
+      return res.status(404).json({ error: 'Todo not found' });
     }
+
+    // Only update fields that are provided
+    const updates = {};
+    if (name !== undefined) updates.name = name;
+    if (priority !== undefined) updates.priority = priority;
+    if (due_date !== undefined) updates.due_date = due_date;
+    if (completed_at !== undefined) updates.completed_at = completed_at;
+
+    await todo.update(updates);
+    res.json(todo);
   } catch (error) {
     console.error('PUT /todos/:id error:', error);
     res.status(500).json({ error: error.message });
@@ -90,9 +76,9 @@ router.put('/:id', async (req, res) => {
 // Delete todo
 router.delete('/:id', async (req, res) => {
   try {
-    const db = await dbPromise;
-    const result = await db.run('DELETE FROM todos WHERE id = ?', req.params.id);
-    if (result.changes > 0) {
+    const todo = await Todo.findByPk(req.params.id);
+    if (todo) {
+      await todo.destroy();
       res.json({ message: 'Todo deleted successfully' });
     } else {
       res.status(404).json({ error: 'Todo not found' });
