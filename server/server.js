@@ -1,14 +1,32 @@
 import express from 'express';
+import session from 'express-session';
+import passport from './config/passport.js';
 import todosRouter from './routes/todos.router.js';
-const PORT = process.env.PORT || 5001;
+import userRouter from './routes/user.router.js';
 
 const app = express();
+const PORT = process.env.PORT || 5001;
+
 app.use(express.json());
 
-// Mount the todos router at /api/todos
+// Session middleware
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    maxAge: 1000 * 60 * 60 * 24 // 24 hours
+  }
+}));
+
+// Initialize passport
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Mount routers
+app.use('/api/users', userRouter);
 app.use('/api/todos', todosRouter);
 
-// Start the server
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
