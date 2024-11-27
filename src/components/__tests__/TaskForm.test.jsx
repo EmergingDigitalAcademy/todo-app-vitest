@@ -82,4 +82,26 @@ describe('TaskForm Component', () => {
     expect(nameInput.value).toBe('');
     expect(screen.getByRole('combobox').value).toBe('medium');
   });
+
+  it('should show loading state', () => {
+    useTodoStore.mockReturnValue({
+      ...mockStore,
+      isLoading: true
+    });
+    
+    render(<TaskForm />);
+    const submitButton = screen.getByRole('button', { name: /Add Task/i });
+    expect(submitButton).toBeDisabled();
+    expect(screen.getByRole('status')).toBeInTheDocument();
+  });
+
+  it('should show error message when present', () => {
+    useTodoStore.mockReturnValue({
+      ...mockStore,
+      error: 'Test error'
+    });
+    
+    render(<TaskForm />);
+    expect(screen.getByText('Error: Test error')).toBeInTheDocument();
+  });
 }); 
