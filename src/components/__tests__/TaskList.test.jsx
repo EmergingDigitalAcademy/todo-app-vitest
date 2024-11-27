@@ -62,7 +62,7 @@ describe('TaskList', () => {
   it('shows loading state', () => {
     useTodoStore.mockReturnValue({ ...mockStore, isLoading: true });
     render(<TaskList />);
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toBeInTheDocument();
   });
 
   // Test error state by modifying mock store return value
