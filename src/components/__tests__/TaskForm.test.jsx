@@ -83,7 +83,7 @@ describe('TaskForm Component', () => {
     expect(screen.getByRole('combobox').value).toBe('medium');
   });
 
-  it('should show loading state', () => {
+  it('should disable submit button when loading', () => {
     useTodoStore.mockReturnValue({
       ...mockStore,
       isLoading: true
@@ -92,7 +92,6 @@ describe('TaskForm Component', () => {
     render(<TaskForm />);
     const submitButton = screen.getByRole('button', { name: /Add Task/i });
     expect(submitButton).toBeDisabled();
-    expect(screen.getByRole('status')).toBeInTheDocument();
   });
 
   it('should show error message when present', () => {

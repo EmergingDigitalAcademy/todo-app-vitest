@@ -22,7 +22,8 @@ describe('TaskList', () => {
     error: null,
     fetchTodos: vi.fn(),    // Mock function for fetching todos
     completeTodo: vi.fn(),  // Mock function for completing todos
-    deleteTodo: vi.fn()     // Mock function for deleting todos
+    deleteTodo: vi.fn(),     // Mock function for deleting todos
+    incompleteTodo: vi.fn()  // Mock function for marking todos as incomplete
   };
 
   // Before each test, reset the mock implementation
@@ -44,7 +45,7 @@ describe('TaskList', () => {
   // Verifies that clicking calls the mock function with correct ID
   it('handles complete todo action', () => {
     render(<TaskList />);
-    const completeButton = screen.getAllByRole('button', { name: /Complete/i })[0];
+    const completeButton = screen.getByLabelText('Mark complete');
     fireEvent.click(completeButton);
     expect(mockStore.completeTodo).toHaveBeenCalledWith(1);
   });
@@ -70,5 +71,13 @@ describe('TaskList', () => {
     useTodoStore.mockReturnValue({ ...mockStore, error: 'Test error' });
     render(<TaskList />);
     expect(screen.getByText('Error: Test error')).toBeInTheDocument();
+  });
+
+  // Test incomplete todo action
+  it('handles incomplete todo action', () => {
+    render(<TaskList />);
+    const incompleteButton = screen.getByLabelText('Mark incomplete');
+    fireEvent.click(incompleteButton);
+    expect(mockStore.incompleteTodo).toHaveBeenCalledWith(2);
   });
 }); 

@@ -97,4 +97,54 @@ describe('Todos API', () => {
         });
     });
   });
+
+  describe('PUT /api/todos/:id', () => {
+    it('updates an existing todo', async () => {
+      // First create a todo
+      const todo = await testDb.run(
+        'INSERT INTO todos (name, priority, due_date) VALUES (?, ?, ?)',
+        ['Test Todo', 'high', '2024-03-20']
+      );
+
+      const updates = {
+        name: 'Updated Todo',
+        priority: 'low',
+        completed_at: '2024-03-21T00:00:00.000Z'
+      };
+
+      await request(app)
+        .put(`/api/todos/${todo.lastID}`)
+        .send(updates)
+        .expect(200)
+        .expect(res => {
+          expect(res.body).toMatchObject(updates);
+        });
+
+      // Verify database state
+      const updated = await testDb.get('SELECT * FROM todos WHERE id = ?', todo.lastID);
+      expect(updated).toMatchObject(updates);
+    });
+
+    it('returns 404 for non-existent todo', async () => {
+      await request(app)
+        .put('/api/todos/999')
+        .send({ name: 'Updated Todo' })
+        .expect(404);
+    });
+
+    it('validates update data', async () => {
+      const todo = await testDb.run(
+        'INSERT INTO todos (name, priority, due_date) VALUES (?, ?, ?)',
+        ['Test Todo', 'high', '2024-03-20']
+      );
+
+      await request(app)
+        .put(`/api/todos/${todo.lastID}`)
+        .send({ priority: 'invalid' })
+        .expect(400)
+        .expect(res => {
+          expect(res.body.error).toContain('priority must be low, medium, or high');
+        });
+    });
+  });
 }); 

@@ -69,15 +69,6 @@ function TaskForm() {
           </Col>
           <Col sm={12}>
             <Button type="submit" disabled={isLoading} variant="primary" className="w-100">
-              {isLoading && (
-                <Spinner
-                  as="span"
-                  animation="border"
-                  size="sm"
-                  role="status"
-                  className="me-2"
-                />
-              )}
               Add Task
             </Button>
           </Col>

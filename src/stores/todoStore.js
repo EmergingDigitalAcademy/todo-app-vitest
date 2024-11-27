@@ -67,6 +67,10 @@ const useTodoStore = create((set, get) => ({
     const completed_at = new Date().toISOString();
     await get().updateTodo(id, { completed_at });
   },
+
+  incompleteTodo: async (id) => {
+    await get().updateTodo(id, { completed_at: null });
+  },
 }));
 
 export default useTodoStore;

@@ -55,15 +55,29 @@ router.get('/:id', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { name, priority, due_date, completed_at } = req.body;
+    
+    // Validate priority if provided
+    if (priority && !['low', 'medium', 'high'].includes(priority)) {
+      return res.status(400).json({ 
+        error: 'priority must be low, medium, or high' 
+      });
+    }
+
     const db = await dbPromise;
     const result = await db.run(
       `UPDATE todos 
-       SET name = ?, priority = ?, due_date = ?, completed_at = ?, updated_at = CURRENT_TIMESTAMP 
+       SET name = COALESCE(?, name), 
+           priority = COALESCE(?, priority), 
+           due_date = COALESCE(?, due_date), 
+           completed_at = COALESCE(?, completed_at), 
+           updated_at = CURRENT_TIMESTAMP 
        WHERE id = ?`,
       [name, priority, due_date, completed_at, req.params.id]
     );
+
     if (result.changes > 0) {
-      res.json({ message: 'Todo updated successfully' });
+      const updated = await db.get('SELECT * FROM todos WHERE id = ?', req.params.id);
+      res.json(updated);
     } else {
       res.status(404).json({ error: 'Todo not found' });
     }
