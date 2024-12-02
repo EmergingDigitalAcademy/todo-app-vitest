@@ -16,6 +16,7 @@ passport.use(new LocalStrategy(async (username, password, done) => {
     
     return done(null, user);
   } catch (err) {
+    console.error('Error in passport strategy:', err);
     return done(err);
   }
 }));

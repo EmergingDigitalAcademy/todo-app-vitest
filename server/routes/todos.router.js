@@ -1,5 +1,5 @@
 import express from 'express';
-import { Todo } from '../modules/db.js';
+import Todo from '../models/todo.js';
 import validateTodo from '../middleware/todoValidation.js';
 import { rejectUnauthenticated } from '../middleware/auth.js';
 
