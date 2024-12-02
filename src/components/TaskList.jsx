@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import useTodoStore from "../stores/todoStore";
-import { Table, Button, Spinner, Alert } from "react-bootstrap";
+import { Table, Button, Spinner, Alert, Badge } from "react-bootstrap";
 import { BsCheckSquare, BsSquare } from "react-icons/bs";
 
 function TaskList() {
@@ -17,6 +17,19 @@ function TaskList() {
   useEffect(() => {
     fetchTodos();
   }, [fetchTodos]);
+
+  const getBadgeVariant = (priority) => {
+    switch (priority.toLowerCase()) {
+      case "high":
+        return "danger";
+      case "medium":
+        return "warning";
+      case "low":
+        return "success";
+      default:
+        return "secondary";
+    }
+  };
 
   if (error) return <Alert variant="danger">Error: {error}</Alert>;
 
@@ -72,21 +85,12 @@ function TaskList() {
                 </Button>
               </td>
               <td>{new Date(todo.due_date).toLocaleDateString()}</td>
-              <td
-                className={`${
-                  todo.priority === "medium"
-                    ? "fw-bold"
-                    : todo.priority === "high"
-                    ? "text-danger"
-                    : ""
-                }`}
-                style={{
-                  textShadow: todo.priority === "high" ? "1px 1px 2px red" : "",
-                }}
-              >
-                {todo.name}
+              <td>{todo.name}</td>
+              <td>
+                <Badge bg={getBadgeVariant(todo.priority)}>
+                  {todo.priority.charAt(0).toUpperCase() + todo.priority.slice(1)}
+                </Badge>
               </td>
-              <td>{todo.priority}</td>
               <td>
                 <Button
                   variant="outline-danger"

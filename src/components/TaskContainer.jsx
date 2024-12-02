@@ -7,10 +7,11 @@ function TaskContainer() {
     <Container className="task-container">
       <Card className="shadow-sm">
         <Card.Header>
-          <h2 className="mb-0">Todo Manager</h2>
+          <h1 className="mb-0">Todo Manager</h1>
         </Card.Header>
         <Card.Body>
           <TaskForm />
+          <h2>My Tasks</h2>
           <TaskList />
         </Card.Body>
       </Card>

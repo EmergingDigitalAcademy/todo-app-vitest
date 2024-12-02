@@ -6,7 +6,7 @@ function App() {
   return (
     <Container className="p-4">
       <Row className="justify-content-center">
-        <Col xs={12} md={8}>
+        <Col xs={12} md={10}>
           <TaskContainer />
         </Col>
       </Row>

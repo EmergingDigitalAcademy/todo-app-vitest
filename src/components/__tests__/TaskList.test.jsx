@@ -59,13 +59,6 @@ describe('TaskList', () => {
     expect(completedRow).toHaveClass('table-success');
   });
 
-  it('applies correct styling for different priority levels', () => {
-    render(<TaskList />);
-    const highPriorityTask = screen.getByText('Test Todo');
-    expect(highPriorityTask).toHaveClass('text-danger');
-    expect(highPriorityTask).toHaveStyle({ textShadow: '1px 1px 2px red' });
-  });
-
   it('toggles todo completion status', () => {
     render(<TaskList />);
     
@@ -108,5 +101,17 @@ describe('TaskList', () => {
     useTodoStore.mockReturnValue({ ...mockStore, error: 'Failed to load todos' });
     render(<TaskList />);
     expect(screen.getByText('Error: Failed to load todos')).toBeInTheDocument();
+  });
+
+  it('renders todo items with correct badge colors based on priority', () => {
+    render(<TaskList />);
+    
+    // Check for the badge of the high priority task
+    const highPriorityBadge = screen.getByText('Test Todo').closest('tr').querySelector('td:nth-child(4) .badge');
+    expect(highPriorityBadge).toHaveClass('bg-danger'); // Check if the badge has the correct class for high priority
+
+    // Check for the badge of the low priority task
+    const lowPriorityBadge = screen.getByText('Completed Todo').closest('tr').querySelector('td:nth-child(4) .badge');
+    expect(lowPriorityBadge).toHaveClass('bg-success'); // Check if the badge has the correct class for low priority
   });
 }); 
