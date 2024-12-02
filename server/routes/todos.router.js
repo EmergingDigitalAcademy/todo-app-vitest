@@ -1,14 +1,23 @@
 import express from 'express';
 import { Todo } from '../modules/db.js';
 import validateTodo from '../middleware/todoValidation.js';
+import { rejectUnauthenticated } from '../middleware/auth.js';
 
 const router = express.Router();
+
+// Add authentication middleware to all routes
+router.use(rejectUnauthenticated);
 
 // Create todo
 router.post('/', validateTodo, async (req, res) => {
   try {
     const { name, priority, due_date } = req.body;
-    const todo = await Todo.create({ name, priority, due_date });
+    const todo = await Todo.create({ 
+      name, 
+      priority, 
+      due_date,
+      user_id: req.user.id // Add user_id from authenticated user
+    });
     res.status(201).json(todo);
   } catch (error) {
     console.error('POST /todos error:', error.stack);
@@ -16,10 +25,17 @@ router.post('/', validateTodo, async (req, res) => {
   }
 });
 
-// Read all todos
+// Read all todos (for current user only)
 router.get('/', async (req, res) => {
   try {
-    const todos = await Todo.findAll();
+    const todos = await Todo.findAll({
+      where: {
+        user_id: req.user.id // Only get todos for current user
+      },
+      order: [
+        ['completed_at', 'ASC'],
+      ],
+    });
     res.json(todos);
   } catch (error) {
     console.error('GET /todos error:', error);
@@ -27,10 +43,15 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Read single todo
+// Read single todo (verify ownership)
 router.get('/:id', async (req, res) => {
   try {
-    const todo = await Todo.findByPk(req.params.id);
+    const todo = await Todo.findOne({
+      where: {
+        id: req.params.id,
+        user_id: req.user.id // Ensure todo belongs to current user
+      }
+    });
     if (todo) {
       res.json(todo);
     } else {
@@ -42,7 +63,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Update todo
+// Update todo (verify ownership)
 router.put('/:id', async (req, res) => {
   try {
     const { name, priority, due_date, completed_at } = req.body;
@@ -53,7 +74,13 @@ router.put('/:id', async (req, res) => {
       });
     }
 
-    const todo = await Todo.findByPk(req.params.id);
+    const todo = await Todo.findOne({
+      where: {
+        id: req.params.id,
+        user_id: req.user.id // Ensure todo belongs to current user
+      }
+    });
+    
     if (!todo) {
       return res.status(404).json({ error: 'Todo not found' });
     }
@@ -73,10 +100,16 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// Delete todo
+// Delete todo (verify ownership)
 router.delete('/:id', async (req, res) => {
   try {
-    const todo = await Todo.findByPk(req.params.id);
+    const todo = await Todo.findOne({
+      where: {
+        id: req.params.id,
+        user_id: req.user.id // Ensure todo belongs to current user
+      }
+    });
+    
     if (todo) {
       await todo.destroy();
       res.json({ message: 'Todo deleted successfully' });

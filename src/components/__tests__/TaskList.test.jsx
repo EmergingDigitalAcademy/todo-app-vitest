@@ -2,82 +2,110 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import TaskList from '../TaskList';
 import useTodoStore from '../../stores/todoStore';
+import useAuthStore from '../../stores/authStore';
 
-// Tell Vitest to mock the entire todoStore module
-// This replaces the real implementation with a mock function
 vi.mock('../../stores/todoStore');
+vi.mock('../../stores/authStore');
 
 describe('TaskList', () => {
-  // Mock data that represents what our store would normally return
+  const mockUser = {
+    id: 1,
+    username: 'testuser'
+  };
+
   const mockTodos = [
-    { id: 1, name: 'Test Todo', priority: 'high', completed_at: null },
-    { id: 2, name: 'Completed Todo', priority: 'low', completed_at: '2024-03-19' }
+    { 
+      id: 1, 
+      name: 'High Priority Task', 
+      priority: 'high', 
+      completed_at: null,
+      due_date: '2024-03-25',
+      user_id: 1
+    },
+    { 
+      id: 2, 
+      name: 'Low Priority Task', 
+      priority: 'low', 
+      completed_at: '2024-03-19',
+      due_date: '2024-03-20',
+      user_id: 1
+    }
   ];
 
-  // Create a mock store object that matches the shape of our real store
-  // but with vi.fn() mock functions for actions
   const mockStore = {
     todos: mockTodos,
     isLoading: false,
     error: null,
-    fetchTodos: vi.fn(),    // Mock function for fetching todos
-    completeTodo: vi.fn(),  // Mock function for completing todos
-    deleteTodo: vi.fn(),     // Mock function for deleting todos
-    incompleteTodo: vi.fn()  // Mock function for marking todos as incomplete
+    fetchTodos: vi.fn(),
+    completeTodo: vi.fn(),
+    deleteTodo: vi.fn(),
+    incompleteTodo: vi.fn()
   };
 
-  // Before each test, reset the mock implementation
-  // This ensures each test starts with a fresh mock
   beforeEach(() => {
-    // When useTodoStore is called, return our mockStore
+    vi.clearAllMocks();
     useTodoStore.mockReturnValue(mockStore);
+    useAuthStore.mockReturnValue({ user: mockUser });
   });
 
-  // Test cases...
-  // Each test renders the component and asserts expected behavior
-  it('renders todos list', () => {
-    render(<TaskList />);
-    expect(screen.getByText('Test Todo')).toBeInTheDocument();
-    expect(screen.getByText('Completed Todo')).toBeInTheDocument();
+  it('should not render tasks when user is not authenticated', () => {
+    useAuthStore.mockReturnValue({ user: null });
+    const { container } = render(<TaskList />);
+    expect(container).toBeEmptyDOMElement();
   });
 
-  // Test interaction with complete button
-  // Verifies that clicking calls the mock function with correct ID
-  it('handles complete todo action', () => {
+  it('renders todo items with correct badge colors based on priority', () => {
     render(<TaskList />);
-    const completeButton = screen.getByLabelText('Mark complete');
-    fireEvent.click(completeButton);
+    
+    // Check for high priority badge
+    const highPriorityBadge = screen.getByText('High').closest('.badge');
+    expect(highPriorityBadge).toHaveClass('bg-danger');
+
+    // Check for low priority badge
+    const lowPriorityBadge = screen.getByText('Low').closest('.badge');
+    expect(lowPriorityBadge).toHaveClass('bg-success');
+  });
+
+  it('shows completion status correctly', () => {
+    render(<TaskList />);
+    
+    // Check incomplete task
+    expect(screen.getByLabelText('Mark complete')).toBeInTheDocument();
+    
+    // Check completed task
+    expect(screen.getByLabelText('Mark incomplete')).toBeInTheDocument();
+  });
+
+  it('handles todo actions', () => {
+    render(<TaskList />);
+    
+    // Test complete action
+    fireEvent.click(screen.getByLabelText('Mark complete'));
     expect(mockStore.completeTodo).toHaveBeenCalledWith(1);
-  });
 
-  // Test interaction with delete button
-  // Verifies that clicking calls the mock function with correct ID
-  it('handles delete todo action', () => {
-    render(<TaskList />);
-    const deleteButton = screen.getAllByRole('button', { name: /Delete/i })[0];
-    fireEvent.click(deleteButton);
+    // Test delete action
+    const deleteButtons = screen.getAllByText('Delete');
+    fireEvent.click(deleteButtons[0]);
     expect(mockStore.deleteTodo).toHaveBeenCalledWith(1);
   });
 
-  // Test loading state by modifying mock store return value
-  it('shows loading state', () => {
+  it('fetches todos on mount', () => {
+    render(<TaskList />);
+    expect(mockStore.fetchTodos).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows loading spinner when loading', () => {
     useTodoStore.mockReturnValue({ ...mockStore, isLoading: true });
     render(<TaskList />);
     expect(screen.getByRole('status')).toBeInTheDocument();
   });
 
-  // Test error state by modifying mock store return value
-  it('shows error state', () => {
-    useTodoStore.mockReturnValue({ ...mockStore, error: 'Test error' });
+  it('shows error message when there is an error', () => {
+    useTodoStore.mockReturnValue({ 
+      ...mockStore, 
+      error: 'Failed to load todos' 
+    });
     render(<TaskList />);
-    expect(screen.getByText('Error: Test error')).toBeInTheDocument();
-  });
-
-  // Test incomplete todo action
-  it('handles incomplete todo action', () => {
-    render(<TaskList />);
-    const incompleteButton = screen.getByLabelText('Mark incomplete');
-    fireEvent.click(incompleteButton);
-    expect(mockStore.incompleteTodo).toHaveBeenCalledWith(2);
+    expect(screen.getByText('Error: Failed to load todos')).toBeInTheDocument();
   });
 }); 

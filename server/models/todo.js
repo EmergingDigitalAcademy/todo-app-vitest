@@ -1,5 +1,6 @@
 import { Model, DataTypes } from 'sequelize';
 import { sequelize } from './index.js';
+import User from './user.js';
 
 class Todo extends Model {}
 
@@ -25,6 +26,14 @@ Todo.init({
     type: DataTypes.DATE,
     allowNull: true
   },
+  user_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
+  },
   created_at: {
     type: DataTypes.DATE,
     allowNull: false,
@@ -43,5 +52,9 @@ Todo.init({
   createdAt: 'created_at',
   updatedAt: 'updated_at'
 });
+
+// Define association
+Todo.belongsTo(User, { foreignKey: 'user_id' });
+User.hasMany(Todo, { foreignKey: 'user_id' });
 
 export default Todo; 

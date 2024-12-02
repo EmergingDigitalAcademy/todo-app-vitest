@@ -9,6 +9,10 @@ const validateTodo = (req, res, next) => {
     return res.status(400).json({ error: 'priority is required' });
   }
 
+  if (!req.user) {
+    return res.status(401).json({ error: 'User not authenticated' });
+  }
+
   if (!['low', 'medium', 'high'].includes(priority)) {
     return res.status(400).json({ 
       error: 'priority must be low, medium, or high' 

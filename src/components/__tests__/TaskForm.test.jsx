@@ -2,11 +2,17 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import TaskForm from '../TaskForm';
 import useTodoStore from '../../stores/todoStore';
+import useAuthStore from '../../stores/authStore';
 
 vi.mock('../../stores/todoStore');
+vi.mock('../../stores/authStore');
 
 describe('TaskForm Component', () => {
-  // Create a complete mock store object
+  const mockUser = {
+    id: 1,
+    username: 'testuser'
+  };
+
   const mockStore = {
     addTodo: vi.fn(),
     isLoading: false,
@@ -16,6 +22,7 @@ describe('TaskForm Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useTodoStore.mockReturnValue(mockStore);
+    useAuthStore.mockReturnValue({ user: mockUser });
   });
 
   it('should render form with all inputs', () => {
@@ -102,5 +109,11 @@ describe('TaskForm Component', () => {
     
     render(<TaskForm />);
     expect(screen.getByText('Error: Test error')).toBeInTheDocument();
+  });
+
+  it('should not render form when user is not authenticated', () => {
+    useAuthStore.mockReturnValue({ user: null });
+    render(<TaskForm />);
+    expect(screen.queryByRole('form')).not.toBeInTheDocument();
   });
 }); 
