@@ -36,13 +36,8 @@ const useTodoStore = create((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       await axios.put(`${API_BASE}/${id}`, updates);
-      // Update local state
-      set((state) => ({
-        todos: state.todos.map((todo) =>
-          todo.id === id ? { ...todo, ...updates } : todo
-        ),
-        isLoading: false,
-      }));
+      // Fetch all todos to ensure we have the latest data
+      await get().fetchTodos();
     } catch (error) {
       set({ error: error.message, isLoading: false });
     }

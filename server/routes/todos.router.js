@@ -19,7 +19,11 @@ router.post('/', validateTodo, async (req, res) => {
 // Read all todos
 router.get('/', async (req, res) => {
   try {
-    const todos = await Todo.findAll();
+    const todos = await Todo.findAll({
+      order: [
+        ['completed_at', 'ASC'], // Sort by completed_at, nulls (incomplete) first
+      ],
+    });
     res.json(todos);
   } catch (error) {
     console.error('GET /todos error:', error);

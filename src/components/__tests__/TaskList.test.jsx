@@ -3,81 +3,110 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import TaskList from '../TaskList';
 import useTodoStore from '../../stores/todoStore';
 
-// Tell Vitest to mock the entire todoStore module
-// This replaces the real implementation with a mock function
 vi.mock('../../stores/todoStore');
 
 describe('TaskList', () => {
-  // Mock data that represents what our store would normally return
   const mockTodos = [
-    { id: 1, name: 'Test Todo', priority: 'high', completed_at: null },
-    { id: 2, name: 'Completed Todo', priority: 'low', completed_at: '2024-03-19' }
+    { 
+      id: 1, 
+      name: 'Test Todo', 
+      priority: 'high', 
+      completed_at: null,
+      due_date: '2024-03-25'
+    },
+    { 
+      id: 2, 
+      name: 'Completed Todo', 
+      priority: 'low', 
+      completed_at: '2024-03-19',
+      due_date: '2024-03-20'
+    }
   ];
 
-  // Create a mock store object that matches the shape of our real store
-  // but with vi.fn() mock functions for actions
   const mockStore = {
     todos: mockTodos,
     isLoading: false,
     error: null,
-    fetchTodos: vi.fn(),    // Mock function for fetching todos
-    completeTodo: vi.fn(),  // Mock function for completing todos
-    deleteTodo: vi.fn(),     // Mock function for deleting todos
-    incompleteTodo: vi.fn()  // Mock function for marking todos as incomplete
+    fetchTodos: vi.fn(),
+    completeTodo: vi.fn(),
+    deleteTodo: vi.fn(),
+    incompleteTodo: vi.fn()
   };
 
-  // Before each test, reset the mock implementation
-  // This ensures each test starts with a fresh mock
   beforeEach(() => {
-    // When useTodoStore is called, return our mockStore
+    vi.clearAllMocks();
     useTodoStore.mockReturnValue(mockStore);
   });
 
-  // Test cases...
-  // Each test renders the component and asserts expected behavior
-  it('renders todos list', () => {
+  it('renders table with correct headers', () => {
     render(<TaskList />);
-    expect(screen.getByText('Test Todo')).toBeInTheDocument();
-    expect(screen.getByText('Completed Todo')).toBeInTheDocument();
+    expect(screen.getByText('Due Date')).toBeInTheDocument();
+    expect(screen.getByText('Title')).toBeInTheDocument();
+    expect(screen.getByText('Priority')).toBeInTheDocument();
+    expect(screen.getByText('Action')).toBeInTheDocument();
   });
 
-  // Test interaction with complete button
-  // Verifies that clicking calls the mock function with correct ID
-  it('handles complete todo action', () => {
+  it('renders todo items with due dates', () => {
     render(<TaskList />);
+    // Use a regex to match the date format
+    expect(screen.getByText(/3\/25\/2024|3\/24\/2024/)).toBeInTheDocument();
+    expect(screen.getByText(/3\/20\/2024|3\/19\/2024/)).toBeInTheDocument();
+  });
+
+  it('applies correct styling for completed todos', () => {
+    render(<TaskList />);
+    const completedRow = screen.getByText('Completed Todo').closest('tr');
+    expect(completedRow).toHaveClass('table-success');
+  });
+
+  it('applies correct styling for different priority levels', () => {
+    render(<TaskList />);
+    const highPriorityTask = screen.getByText('Test Todo');
+    expect(highPriorityTask).toHaveClass('text-danger');
+    expect(highPriorityTask).toHaveStyle({ textShadow: '1px 1px 2px red' });
+  });
+
+  it('toggles todo completion status', () => {
+    render(<TaskList />);
+    
+    // Complete an incomplete todo
     const completeButton = screen.getByLabelText('Mark complete');
     fireEvent.click(completeButton);
     expect(mockStore.completeTodo).toHaveBeenCalledWith(1);
+
+    // Incomplete a completed todo
+    const incompleteButton = screen.getByLabelText('Mark incomplete');
+    fireEvent.click(incompleteButton);
+    expect(mockStore.incompleteTodo).toHaveBeenCalledWith(2);
   });
 
-  // Test interaction with delete button
-  // Verifies that clicking calls the mock function with correct ID
-  it('handles delete todo action', () => {
+  it('shows correct completion icons', () => {
     render(<TaskList />);
-    const deleteButton = screen.getAllByRole('button', { name: /Delete/i })[0];
-    fireEvent.click(deleteButton);
+    expect(screen.getByLabelText('Mark complete')).toBeInTheDocument();
+    expect(screen.getByLabelText('Mark incomplete')).toBeInTheDocument();
+  });
+
+  it('handles delete action', () => {
+    render(<TaskList />);
+    const deleteButtons = screen.getAllByText('Delete');
+    fireEvent.click(deleteButtons[0]);
     expect(mockStore.deleteTodo).toHaveBeenCalledWith(1);
   });
 
-  // Test loading state by modifying mock store return value
-  it('shows loading state', () => {
+  it('fetches todos on mount', () => {
+    render(<TaskList />);
+    expect(mockStore.fetchTodos).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows loading spinner when loading', () => {
     useTodoStore.mockReturnValue({ ...mockStore, isLoading: true });
     render(<TaskList />);
     expect(screen.getByRole('status')).toBeInTheDocument();
   });
 
-  // Test error state by modifying mock store return value
-  it('shows error state', () => {
-    useTodoStore.mockReturnValue({ ...mockStore, error: 'Test error' });
+  it('shows error message when there is an error', () => {
+    useTodoStore.mockReturnValue({ ...mockStore, error: 'Failed to load todos' });
     render(<TaskList />);
-    expect(screen.getByText('Error: Test error')).toBeInTheDocument();
-  });
-
-  // Test incomplete todo action
-  it('handles incomplete todo action', () => {
-    render(<TaskList />);
-    const incompleteButton = screen.getByLabelText('Mark incomplete');
-    fireEvent.click(incompleteButton);
-    expect(mockStore.incompleteTodo).toHaveBeenCalledWith(2);
+    expect(screen.getByText('Error: Failed to load todos')).toBeInTheDocument();
   });
 }); 
