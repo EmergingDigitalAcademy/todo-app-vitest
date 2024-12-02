@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import useTodoStore from "../stores/todoStore";
+import useAuthStore from "../stores/authStore";
 import { Table, Button, Spinner, Alert, Badge } from "react-bootstrap";
 import { BsCheckSquare, BsSquare } from "react-icons/bs";
 
@@ -13,10 +14,25 @@ function TaskList() {
     completeTodo,
     incompleteTodo,
   } = useTodoStore();
+  
+  const { user } = useAuthStore();
 
   useEffect(() => {
-    fetchTodos();
-  }, [fetchTodos]);
+    if (user) {
+      fetchTodos();
+    }
+  }, [fetchTodos, user]);
+
+  // Don't render if not authenticated
+  if (!user) return null;
+
+  if (isLoading) {
+    return <Spinner animation="border" role="status" />;
+  }
+
+  if (error) {
+    return <Alert variant="danger">Error: {error}</Alert>;
+  }
 
   const getBadgeVariant = (priority) => {
     switch (priority.toLowerCase()) {
@@ -31,22 +47,8 @@ function TaskList() {
     }
   };
 
-  if (error) return <Alert variant="danger">Error: {error}</Alert>;
-
   return (
     <>
-      {isLoading && (
-        <Spinner
-          style={{
-            position: "fixed",
-            bottom: "20px",
-            right: "20px",
-            zIndex: 1000,
-          }}
-          animation="border"
-          role="status"
-        />
-      )}
       <Table bordered hover>
         <thead>
           <tr>

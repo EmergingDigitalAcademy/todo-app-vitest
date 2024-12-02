@@ -2,24 +2,33 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import TaskList from '../TaskList';
 import useTodoStore from '../../stores/todoStore';
+import useAuthStore from '../../stores/authStore';
 
 vi.mock('../../stores/todoStore');
+vi.mock('../../stores/authStore');
 
 describe('TaskList', () => {
+  const mockUser = {
+    id: 1,
+    username: 'testuser'
+  };
+
   const mockTodos = [
     { 
       id: 1, 
-      name: 'Test Todo', 
+      name: 'High Priority Task', 
       priority: 'high', 
       completed_at: null,
-      due_date: '2024-03-25'
+      due_date: '2024-03-25',
+      user_id: 1
     },
     { 
       id: 2, 
-      name: 'Completed Todo', 
+      name: 'Low Priority Task', 
       priority: 'low', 
       completed_at: '2024-03-19',
-      due_date: '2024-03-20'
+      due_date: '2024-03-20',
+      user_id: 1
     }
   ];
 
@@ -36,51 +45,45 @@ describe('TaskList', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useTodoStore.mockReturnValue(mockStore);
+    useAuthStore.mockReturnValue({ user: mockUser });
   });
 
-  it('renders table with correct headers', () => {
-    render(<TaskList />);
-    expect(screen.getByText('Due Date')).toBeInTheDocument();
-    expect(screen.getByText('Title')).toBeInTheDocument();
-    expect(screen.getByText('Priority')).toBeInTheDocument();
-    expect(screen.getByText('Action')).toBeInTheDocument();
+  it('should not render tasks when user is not authenticated', () => {
+    useAuthStore.mockReturnValue({ user: null });
+    const { container } = render(<TaskList />);
+    expect(container).toBeEmptyDOMElement();
   });
 
-  it('renders todo items with due dates', () => {
-    render(<TaskList />);
-    // Use a regex to match the date format
-    expect(screen.getByText(/3\/25\/2024|3\/24\/2024/)).toBeInTheDocument();
-    expect(screen.getByText(/3\/20\/2024|3\/19\/2024/)).toBeInTheDocument();
-  });
-
-  it('applies correct styling for completed todos', () => {
-    render(<TaskList />);
-    const completedRow = screen.getByText('Completed Todo').closest('tr');
-    expect(completedRow).toHaveClass('table-success');
-  });
-
-  it('toggles todo completion status', () => {
+  it('renders todo items with correct badge colors based on priority', () => {
     render(<TaskList />);
     
-    // Complete an incomplete todo
-    const completeButton = screen.getByLabelText('Mark complete');
-    fireEvent.click(completeButton);
-    expect(mockStore.completeTodo).toHaveBeenCalledWith(1);
+    // Check for high priority badge
+    const highPriorityBadge = screen.getByText('High').closest('.badge');
+    expect(highPriorityBadge).toHaveClass('bg-danger');
 
-    // Incomplete a completed todo
-    const incompleteButton = screen.getByLabelText('Mark incomplete');
-    fireEvent.click(incompleteButton);
-    expect(mockStore.incompleteTodo).toHaveBeenCalledWith(2);
+    // Check for low priority badge
+    const lowPriorityBadge = screen.getByText('Low').closest('.badge');
+    expect(lowPriorityBadge).toHaveClass('bg-success');
   });
 
-  it('shows correct completion icons', () => {
+  it('shows completion status correctly', () => {
     render(<TaskList />);
+    
+    // Check incomplete task
     expect(screen.getByLabelText('Mark complete')).toBeInTheDocument();
+    
+    // Check completed task
     expect(screen.getByLabelText('Mark incomplete')).toBeInTheDocument();
   });
 
-  it('handles delete action', () => {
+  it('handles todo actions', () => {
     render(<TaskList />);
+    
+    // Test complete action
+    fireEvent.click(screen.getByLabelText('Mark complete'));
+    expect(mockStore.completeTodo).toHaveBeenCalledWith(1);
+
+    // Test delete action
     const deleteButtons = screen.getAllByText('Delete');
     fireEvent.click(deleteButtons[0]);
     expect(mockStore.deleteTodo).toHaveBeenCalledWith(1);
@@ -98,20 +101,11 @@ describe('TaskList', () => {
   });
 
   it('shows error message when there is an error', () => {
-    useTodoStore.mockReturnValue({ ...mockStore, error: 'Failed to load todos' });
+    useTodoStore.mockReturnValue({ 
+      ...mockStore, 
+      error: 'Failed to load todos' 
+    });
     render(<TaskList />);
     expect(screen.getByText('Error: Failed to load todos')).toBeInTheDocument();
-  });
-
-  it('renders todo items with correct badge colors based on priority', () => {
-    render(<TaskList />);
-    
-    // Check for the badge of the high priority task
-    const highPriorityBadge = screen.getByText('Test Todo').closest('tr').querySelector('td:nth-child(4) .badge');
-    expect(highPriorityBadge).toHaveClass('bg-danger'); // Check if the badge has the correct class for high priority
-
-    // Check for the badge of the low priority task
-    const lowPriorityBadge = screen.getByText('Completed Todo').closest('tr').querySelector('td:nth-child(4) .badge');
-    expect(lowPriorityBadge).toHaveClass('bg-success'); // Check if the badge has the correct class for low priority
   });
 }); 

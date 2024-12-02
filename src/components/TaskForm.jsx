@@ -1,14 +1,18 @@
 import { useState } from 'react';
 import useTodoStore from '../stores/todoStore';
+import useAuthStore from '../stores/authStore';
 import { Form, Button, Row, Col, Spinner, Alert } from 'react-bootstrap';
 
 function TaskForm() {
   const { addTodo, isLoading, error } = useTodoStore();
+  const { user } = useAuthStore();
   const [formData, setFormData] = useState({
     name: '',
     priority: 'medium',
     due_date: new Date().toISOString().split('T')[0]
   });
+
+  if (!user) return null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
