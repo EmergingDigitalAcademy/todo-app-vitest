@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   development: {
     dialect: 'sqlite',
     storage: './server/todos.db'
