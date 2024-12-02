@@ -1,0 +1,11 @@
+.loading-spinner {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.loading-spinner .spinner-border {
+  width: 2rem;
+  height: 2rem;
+}

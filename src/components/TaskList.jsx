@@ -3,6 +3,7 @@ import useTodoStore from "../stores/todoStore";
 import useAuthStore from "../stores/authStore";
 import { Table, Button, Spinner, Alert, Badge } from "react-bootstrap";
 import { BsCheckSquare, BsSquare } from "react-icons/bs";
+import '../App.css';
 
 function TaskList() {
   const {
@@ -26,9 +27,7 @@ function TaskList() {
   // Don't render if not authenticated
   if (!user) return null;
 
-  if (isLoading) {
-    return <Spinner animation="border" role="status" />;
-  }
+  // Loading state handled in main return
 
   if (error) {
     return <Alert variant="danger">Error: {error}</Alert>;
@@ -49,6 +48,11 @@ function TaskList() {
 
   return (
     <>
+      {isLoading && (
+        <div className="loading-spinner">
+          <Spinner animation="border" role="status" />
+        </div>
+      )}
       <Table bordered hover>
         <thead>
           <tr>
