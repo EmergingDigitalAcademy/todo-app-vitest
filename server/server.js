@@ -7,6 +7,10 @@ import userRouter from './routes/user.router.js';
 const app = express();
 const PORT = process.env.PORT || 5001;
 
+// Set up express static file server
+app.use(express.static('dist'));
+
+// Parse JSON bodies
 app.use(express.json());
 
 // Session middleware
