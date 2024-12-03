@@ -7,21 +7,31 @@ import userRouter from './routes/user.router.js';
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-// Set up express static file server
-app.use(express.static('dist'));
+// Add these compatibility methods for Passport
+app.use((req, res, next) => {
+  if (req.session && !req.session.regenerate) {
+    req.session.regenerate = (cb) => cb();
+  }
+  if (req.session && !req.session.save) {
+    req.session.save = (cb) => cb();
+  }
+  next();
+});
 
-// Parse JSON bodies
-app.use(express.json());
-
-// Session middleware
+// Cookie session middleware
 app.use(cookieSession({
   name: 'session',
   keys: [process.env.SESSION_SECRET || 'your-secret-key'],
-  maxAge: 1000 * 60 * 60 * 24 // 24 hours
+  maxAge: 24 * 60 * 60 * 1000, // 24 hours
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'strict'
 }));
 
-// Initialize passport
+// Other middleware
+app.use(express.static('dist'));
+app.use(express.json());
 app.use(passport.initialize());
+app.use(passport.session());
 
 // Mount routers
 app.use('/api/users', userRouter);
