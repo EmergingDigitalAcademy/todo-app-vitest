@@ -34,6 +34,14 @@ function App() {
           } 
         />
         <Route path="/" element={<Navigate to="/tasks" replace />} />
+        {/* TODO: Add a route for the 404 page */}
+        <Route path="*" element={
+          <div className="d-flex flex-column align-items-center justify-content-center vh-100">
+            <h1 className="display-1 fw-bold">404</h1>
+            <p className="fs-3">Page Not Found</p>
+            <p className="lead">The page you're looking for doesn't exist.</p>
+          </div>
+        } />
       </Routes>
     </Router>
   );
