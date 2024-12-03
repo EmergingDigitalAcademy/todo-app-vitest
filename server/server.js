@@ -1,5 +1,5 @@
 import express from 'express';
-import session from 'express-session';
+import cookieSession from 'cookie-session';
 import passport from './config/passport.js';
 import todosRouter from './routes/todos.router.js';
 import userRouter from './routes/user.router.js';
@@ -14,18 +14,14 @@ app.use(express.static('dist'));
 app.use(express.json());
 
 // Session middleware
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'your-secret-key',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    maxAge: 1000 * 60 * 60 * 24 // 24 hours
-  }
+app.use(cookieSession({
+  name: 'session',
+  keys: [process.env.SESSION_SECRET || 'your-secret-key'],
+  maxAge: 1000 * 60 * 60 * 24 // 24 hours
 }));
 
 // Initialize passport
 app.use(passport.initialize());
-app.use(passport.session());
 
 // Mount routers
 app.use('/api/users', userRouter);
