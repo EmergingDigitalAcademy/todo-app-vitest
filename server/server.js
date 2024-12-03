@@ -38,10 +38,10 @@ app.use(passport.session());
 app.use('/api/users', userRouter);
 app.use('/api/todos', todosRouter);
 
-app.get('*', (req, res) => {
-  console.log('sending index.html')
-  res.sendFile(path.resolve('dist', 'index.html'))
-});
+// app.get('*', (req, res) => {
+//   console.log('sending index.html')
+//   res.sendFile(path.resolve('dist', 'index.html'))
+// });
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
