@@ -2,6 +2,7 @@ import express from 'express';
 import Todo from '../models/todo.js';
 import validateTodo from '../middleware/todoValidation.js';
 import { rejectUnauthenticated } from '../middleware/auth.js';
+import { sequelizeErrorHandler } from '../middleware/errorHandler.js';
 
 const router = express.Router();
 
@@ -121,5 +122,9 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// Add at the end of your router
+router.use(sequelizeErrorHandler);
+
 
 export default router; 
