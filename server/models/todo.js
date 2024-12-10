@@ -12,11 +12,28 @@ Todo.init({
   },
   name: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: false,
+    validate: {
+      notNull: {
+        msg: 'name is required'
+      },
+      notEmpty: {
+        msg: 'name cannot be empty'
+      }
+    }
   },
   priority: {
     type: DataTypes.ENUM('low', 'medium', 'high'),
-    allowNull: false
+    allowNull: false,
+    validate: {
+      notNull: {
+        msg: 'priority is required'
+      },
+      isIn: {
+        args: [['low', 'medium', 'high']],
+        msg: 'priority must be low, medium, or high'
+      }
+    }
   },
   due_date: {
     type: DataTypes.DATE,
